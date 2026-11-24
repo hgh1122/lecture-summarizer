@@ -19,9 +19,6 @@ slides.json + audio.wav ─▶ [B] stt → align(슬라이드별 묶기) → sum
 notes.json ─▶ [C] Gradio 화면 / Word 내보내기
 ```
 
-모듈 사이 데이터 형식은 [`docs/interface.md`](docs/interface.md)에 있고, 샘플은 `docs/samples/`에 있습니다.
-**앞 단계 결과를 기다리지 말고 샘플 JSON으로 먼저 개발하세요.**
-
 ## 개발 단계
 
 | 1단계 링크 → 슬라이드 캡처·OCR → 자막 → 슬라이드별 원문 노트 화면 
