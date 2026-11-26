@@ -1,18 +1,19 @@
-# Python 3.11 권장
-# PyTorch는 GPU(CUDA) 버전에 맞춰 먼저 따로 설치: https://pytorch.org/get-started/locally/
+# Python 3.11 recommended
+# Install PyTorch first for your GPU/CUDA version: https://pytorch.org/get-started/locally/
 torch
 
-# A · 영상·화면
+# A - video / vision
 yt-dlp
 opencv-python
 scenedetect[opencv]
 easyocr
 
-# B · 음성·텍스트
+# B - speech / text
 faster-whisper
 ollama
-# sentence-transformers   # 3단계 검색 기능 때 주석 해제
 
-# C · 화면·결과물
-gradio
+# C - service / output
+fastapi
+uvicorn[standard]
+jinja2
 python-docx
