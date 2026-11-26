@@ -152,16 +152,16 @@ source .venv/bin/activate          # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-**Please note:** the repository is being moved to the server architecture described above. Until that lands, `python -m app.main` starts the prototype web UI, and its *"Load sample data"* button works without any model installed.
+**Please note:** modules are under active development. Each module can be developed and tested on its own with the sample data in `docs/samples/contract/`. Check that the samples match the contract with `python -m common.schema`.
 
 ## Project layout
 
 ```
 lecture-summarizer/
-├─ common/            shared data types (the module contract) — added with the restructure
+├─ common/            shared data types (the module contract)
 ├─ video/             download, slide detection, OCR
 ├─ speech/            speech recognition, alignment, summarization
-├─ app/               API, web UI, Word export
+├─ app/               API (FastAPI), web UI, Word export
 ├─ docs/
 │  ├─ images/         figures used in this README
 │  ├─ samples/        sample input/output for each module boundary
@@ -368,16 +368,16 @@ source .venv/bin/activate          # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-**참고:** 저장소는 지금 위에서 설명한 서버 구조로 옮겨 가는 중입니다. 그 작업이 끝나기 전까지는 `python -m app.main`으로 시제품 웹 화면을 실행할 수 있으며, *"샘플 데이터로 보기"* 버튼은 모델을 설치하지 않아도 동작합니다.
+**참고:** 각 모듈은 개발 중입니다. 모든 모듈은 `docs/samples/contract/`의 샘플 데이터로 따로 개발하고 테스트할 수 있습니다. 샘플이 데이터 계약과 맞는지는 `python -m common.schema`로 확인합니다.
 
 ## 폴더 구조
 
 ```
 lecture-summarizer/
-├─ common/            공통 데이터 형식 (모듈 계약) — 구조 개편 시 추가
+├─ common/            공통 데이터 형식 (모듈 계약)
 ├─ video/             다운로드, 슬라이드 감지, 글자 인식
 ├─ speech/            음성 인식, 정렬, 요약
-├─ app/               API, 웹 화면, Word 내보내기
+├─ app/               API (FastAPI), 웹 화면, Word 내보내기
 ├─ docs/
 │  ├─ images/         README에 쓰인 그림
 │  ├─ samples/        모듈 경계별 샘플 입출력

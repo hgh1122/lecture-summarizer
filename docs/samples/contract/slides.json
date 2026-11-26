@@ -3,21 +3,21 @@
     "no": 1,
     "start": 0.0,
     "end": 95.3,
-    "image_path": "docs/samples/slides/001.png",
+    "image_path": "docs/samples/contract/slides/001.png",
     "ocr_text": "CNN 개요\n합성곱 신경망이란?"
   },
   {
     "no": 2,
     "start": 95.3,
     "end": 210.0,
-    "image_path": "docs/samples/slides/002.png",
+    "image_path": "docs/samples/contract/slides/002.png",
     "ocr_text": "합성곱 연산\n필터, 스트라이드, 패딩"
   },
   {
     "no": 3,
     "start": 210.0,
     "end": 300.0,
-    "image_path": "docs/samples/slides/003.png",
+    "image_path": "docs/samples/contract/slides/003.png",
     "ocr_text": "풀링\nMax Pooling"
   }
 ]
