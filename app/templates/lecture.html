@@ -1,23 +1,264 @@
 {% extends "base.html" %}
-{% block title %}{{ result.meta.title }} - 강의 영상 요약기{% endblock %}
+{% block title %}{{ result.meta.title }} - 강의노트{% endblock %}
+{% block head %}
+<style>
+  .notice { background: var(--green-soft); color: var(--green-dark); font-size: 14px; font-weight: 600; padding: 10px 20px; text-align: center; }
+
+  .lecture-head { background: var(--card); border-bottom: 1px solid var(--line); padding: 36px 0 22px; }
+  .lecture-head h1 { font-size: clamp(26px, 3.6vw, 38px); line-height: 1.25; letter-spacing: -0.035em; font-weight: 800; margin: 0 0 6px; }
+  .meta { color: var(--text-2); margin: 0 0 20px; }
+  .overview { background: var(--bg); border-radius: 12px; padding: 16px 20px; margin: 0 0 20px; }
+  .overview b { color: var(--green-dark); margin-right: 8px; }
+
+  /* 도구 줄: 노트 안에서 찾기 + 보기 방식 */
+  .toolbar { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+  .find { display: flex; align-items: center; gap: 8px; flex: 1; min-width: 240px; max-width: 420px; border: 1px solid var(--line); border-radius: 10px; padding: 0 12px; background: var(--card); }
+  .find:focus-within { border-color: var(--green); box-shadow: 0 0 0 4px var(--green-soft); }
+  .find input { flex: 1; min-width: 0; border: 0; font: inherit; font-size: 15px; padding: 10px 0; background: transparent; }
+  .find input:focus { outline: none; }
+  .find svg { color: var(--text-2); flex: none; }
+  .find-count { font-size: 13px; color: var(--text-2); white-space: nowrap; }
+  .seg { display: inline-flex; background: var(--bg); border-radius: 10px; padding: 4px; }
+  .seg button { appearance: none; border: 0; background: transparent; font: inherit; font-size: 14px; font-weight: 600; color: var(--text-2); padding: 7px 14px; border-radius: 8px; cursor: pointer; }
+  .seg button[aria-pressed="true"] { background: var(--card); color: var(--green-dark); box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+  .keys { font-size: 13px; color: var(--text-2); margin-left: auto; }
+  kbd { font: inherit; font-size: 12px; border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 5px; padding: 0 6px; background: var(--card); }
+
+  /* 왼쪽 목차 + 오른쪽 노트 */
+  .layout { display: grid; grid-template-columns: 230px 1fr; gap: 28px; align-items: start; padding: 28px 0 100px; }
+  .rail { position: sticky; top: 78px; background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 10px; }
+  .rail ol { list-style: none; margin: 0; padding: 0; }
+  .rail a { display: flex; gap: 10px; align-items: baseline; padding: 9px 10px; border-radius: 8px; color: var(--text-2); font-size: 15px; }
+  .rail a:hover { background: var(--bg); color: var(--text); text-decoration: none; }
+  .rail a .n { font-weight: 700; min-width: 16px; }
+  .rail a .t { margin-left: auto; font-size: 12px; }
+  .rail a[aria-current="true"] { background: var(--green-soft); color: var(--green-dark); font-weight: 700; }
+  .rail li.dim a { opacity: .35; }   /* 찾기 결과에 없는 슬라이드 */
+
+  .note { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 24px; margin-bottom: 16px; scroll-margin-top: 78px; transition: border-color .2s, box-shadow .2s; }
+  .note.active { border-color: var(--green); box-shadow: 0 0 0 3px var(--green-soft); }
+  .note[hidden] { display: none; }
+  .note-head { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+  .badge { background: var(--green); color: #fff; font-weight: 800; font-size: 14px; min-width: 28px; height: 28px; border-radius: 8px; display: grid; place-items: center; }
+  .note-head h2 { font-size: 20px; letter-spacing: -0.02em; margin: 0; flex: 1; }
+  .time { font-size: 14px; color: var(--text-2); white-space: nowrap; }
+
+  .note-body { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: 24px; }
+  .shot { appearance: none; border: 1px solid var(--line); border-radius: 10px; padding: 0; background: var(--bg); cursor: zoom-in; overflow: hidden; display: block; width: 100%; position: relative; }
+  .shot img { display: block; width: 100%; height: auto; transition: transform .25s; }
+  .shot:hover img { transform: scale(1.03); }
+  .shot::after { content: "크게 보기"; position: absolute; right: 8px; bottom: 8px; background: rgba(34,34,34,.75); color: #fff; font-size: 12px; padding: 3px 8px; border-radius: 6px; opacity: 0; transition: opacity .2s; }
+  .shot:hover::after, .shot:focus-visible::after { opacity: 1; }
+
+  .summary-row { display: flex; gap: 8px; align-items: flex-start; }
+  .summary { margin: 0 0 12px; font-size: 17px; line-height: 1.75; font-weight: 600; flex: 1; }
+  .summary .hl { background: linear-gradient(transparent 55%, var(--marker) 55%); box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+  .copy { appearance: none; border: 1px solid var(--line); background: var(--card); color: var(--text-2); font: inherit; font-size: 12px; font-weight: 600; padding: 4px 9px; border-radius: 7px; cursor: pointer; white-space: nowrap; }
+  .copy:hover { border-color: var(--green); color: var(--green-dark); }
+  .no-summary { color: var(--text-2); font-size: 14px; margin: 0 0 12px; }
+  mark { background: #FFE58F; color: inherit; border-radius: 3px; padding: 0 1px; }
+
+  details.transcript { border-top: 1px solid var(--line); padding-top: 10px; }
+  details.transcript summary { cursor: pointer; color: var(--text-2); font-weight: 600; font-size: 14px; list-style: none; display: inline-flex; align-items: center; gap: 6px; padding: 4px 0; }
+  details.transcript summary:hover { color: var(--green-dark); }
+  details.transcript summary::-webkit-details-marker { display: none; }
+  details.transcript summary::after { content: ""; width: 6px; height: 6px; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(45deg); margin-top: -3px; transition: transform .2s; }
+  details.transcript[open] summary::after { transform: rotate(-135deg); margin-top: 3px; }
+  details.transcript p { margin: 8px 0 0; color: #444; line-height: 1.85; font-size: 15px; }
+
+  .no-result { background: var(--card); border: 1px dashed var(--line); border-radius: 14px; padding: 32px; text-align: center; color: var(--text-2); }
+
+  /* 위로 가기 버튼 */
+  .to-top { position: fixed; right: 22px; bottom: 22px; width: 46px; height: 46px; border-radius: 50%; border: 1px solid var(--line); background: var(--card); box-shadow: 0 4px 14px rgba(0,0,0,.1); cursor: pointer; opacity: 0; pointer-events: none; transition: opacity .2s; font-size: 18px; color: var(--green-dark); }
+  .to-top.show { opacity: 1; pointer-events: auto; }
+
+  /* 이미지 크게 보기 (좌우 이동 가능) */
+  dialog.zoom { border: 0; padding: 0; background: transparent; max-width: min(1100px, 94vw); overflow: visible; }
+  dialog.zoom::backdrop { background: rgba(0,0,0,.75); }
+  dialog.zoom img { display: block; max-width: 100%; max-height: 80vh; border-radius: 10px; background: #fff; }
+  .zoom-bar { display: flex; justify-content: space-between; align-items: center; color: #fff; margin-bottom: 10px; gap: 10px; }
+  .zoom-bar .btns { display: flex; gap: 6px; }
+  .zoom-bar button { appearance: none; border: 0; background: rgba(255,255,255,.16); color: #fff; font: inherit; font-weight: 600; padding: 8px 14px; border-radius: 8px; cursor: pointer; }
+  .zoom-bar button:hover { background: rgba(255,255,255,.28); }
+
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; gap: 0; padding-top: 0; }
+    .rail { top: 58px; z-index: 10; border-radius: 0; border-width: 0 0 1px; margin: 0 -20px 16px; padding: 8px 20px; overflow-x: auto; }
+    .rail ol { display: flex; gap: 4px; }
+    .rail a { white-space: nowrap; }
+    .rail a .t { display: none; }
+    .note-body { grid-template-columns: 1fr; }
+    .keys { display: none; }
+  }
+</style>
+{% endblock %}
 {% block content %}
-{% if is_sample %}<p class="muted">※ 샘플 데이터 (docs/samples/contract/result.json)</p>{% endif %}
+{% if is_sample %}<div class="notice">샘플 노트예요. 내 강의는 첫 화면에서 링크를 넣어 만들 수 있어요.</div>{% endif %}
 
-<h2>{{ result.meta.title }}</h2>
-<p class="muted">길이 {{ result.meta.duration | fmt_time }} · 슬라이드 {{ rows | length }}장</p>
-{% if result.overview %}
-<div class="box"><b>전체 요약</b><br>{{ result.overview }}</div>
-{% endif %}
+<section class="lecture-head">
+  <div class="wrap">
+    <h1>{{ result.meta.title }}</h1>
+    <p class="meta">{{ result.meta.duration | minutes }} 강의, 슬라이드 {{ rows | length }}장</p>
+    {% if result.overview %}<p class="overview"><b>전체 요약</b>{{ result.overview }}</p>{% endif %}
+    <div class="toolbar">
+      <label class="find">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="m20 20-3.5-3.5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        <input id="find" type="search" placeholder="노트에서 찾기 (예: 패딩)" aria-label="노트에서 찾기">
+        <span class="find-count" id="find-count"></span>
+      </label>
+      <div class="seg" role="group" aria-label="보기 방식">
+        <button type="button" data-mode="summary" aria-pressed="true">요약 위주</button>
+        <button type="button" data-mode="full" aria-pressed="false">원문 펼치기</button>
+      </div>
+      <span class="keys"><kbd>←</kbd> <kbd>→</kbd> 슬라이드 이동</span>
+    </div>
+  </div>
+</section>
 
-{% for r in rows %}
-<div class="box slide">
-  <img src="/files/{{ r.slide.image_path }}" alt="슬라이드 {{ r.slide.no }}">
-  <div>
-    <h3 style="margin-top:0">{{ r.slide.no }}. {{ r.title }}
-      <span class="time">{{ r.slide.start | fmt_time }} ~ {{ r.slide.end | fmt_time }}</span></h3>
-    {% if r.summary %}<p><b>요약</b> {{ r.summary }}</p>{% endif %}
-    <blockquote>{{ r.transcript or "(설명 없음)" }}</blockquote>
+<div class="wrap layout">
+  <nav class="rail" aria-label="슬라이드 목차">
+    <ol>
+      {% for r in rows %}
+      <li data-for="slide-{{ r.slide.no }}"><a href="#slide-{{ r.slide.no }}" data-target="slide-{{ r.slide.no }}">
+        <span class="n">{{ r.slide.no }}</span><span>{{ r.title }}</span><span class="t">{{ r.slide.start | clock }}</span>
+      </a></li>
+      {% endfor %}
+    </ol>
+  </nav>
+
+  <div id="notes">
+    {% for r in rows %}
+    <article class="note" id="slide-{{ r.slide.no }}" data-no="{{ r.slide.no }}">
+      <header class="note-head">
+        <span class="badge">{{ r.slide.no }}</span>
+        <h2>{{ r.title }}</h2>
+        <span class="time">{{ r.slide.start | clock }} – {{ r.slide.end | clock }}</span>
+      </header>
+      <div class="note-body">
+        <button type="button" class="shot" data-src="/files/{{ r.slide.image_path }}" data-title="{{ r.slide.no }}. {{ r.title }}" aria-label="{{ r.slide.no }}번 슬라이드 크게 보기">
+          <img src="/files/{{ r.slide.image_path }}" alt="{{ r.slide.no }}번 슬라이드: {{ r.title }}" loading="lazy">
+        </button>
+        <div>
+          {% if r.summary %}
+          <div class="summary-row">
+            <p class="summary"><span class="hl" data-text="{{ r.summary }}">{{ r.summary }}</span></p>
+            <button type="button" class="copy" data-copy="{{ r.summary }}">요약 복사</button>
+          </div>
+          {% else %}
+          <p class="no-summary">아직 요약이 없어요. 아래 원문을 펼쳐 보세요.</p>
+          {% endif %}
+          <details class="transcript" {% if not r.summary %}open{% endif %}>
+            <summary>강의 원문</summary>
+            <p data-text="{{ r.transcript or '' }}">{{ r.transcript or "이 슬라이드에서는 말한 내용이 없어요." }}</p>
+          </details>
+        </div>
+      </div>
+    </article>
+    {% endfor %}
+    <p class="no-result" id="no-result" hidden>찾는 말이 들어간 슬라이드가 없어요. 다른 단어로 찾아보세요.</p>
   </div>
 </div>
-{% endfor %}
+
+<button type="button" class="to-top" id="to-top" aria-label="맨 위로">↑</button>
+
+<dialog class="zoom" id="zoom" aria-label="슬라이드 크게 보기">
+  <div class="zoom-bar">
+    <b id="zoom-title"></b>
+    <div class="btns">
+      <button type="button" id="zoom-prev" aria-label="이전 슬라이드">이전</button>
+      <button type="button" id="zoom-next" aria-label="다음 슬라이드">다음</button>
+      <button type="button" id="zoom-close">닫기</button>
+    </div>
+  </div>
+  <img id="zoom-img" alt="">
+</dialog>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const notes = [...document.querySelectorAll(".note")];
+const links = [...document.querySelectorAll(".rail a")];
+
+// 1) 보기 방식: 요약 위주(원문 접힘) / 원문 펼치기
+const segButtons = document.querySelectorAll(".seg button");
+segButtons.forEach((b) => b.addEventListener("click", () => {
+  segButtons.forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+  document.querySelectorAll("details.transcript").forEach((d) => (d.open = b.dataset.mode === "full"));
+}));
+
+// 2) 노트에서 찾기: 단어가 들어간 슬라이드만 남기고 노란색으로 표시
+const escapeHtml = (s) => s.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+function paint(el, q) {           // 원래 글(data-text)을 다시 그리면서 찾은 단어만 <mark>로 감싸기
+  const raw = el.dataset.text;
+  if (!raw) return;
+  if (!q) { el.textContent = raw; return; }
+  const safe = q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  el.innerHTML = escapeHtml(raw).replace(new RegExp(escapeHtml(safe), "gi"), (m) => `<mark>${m}</mark>`);
+}
+$("find").addEventListener("input", (e) => {
+  const q = e.target.value.trim();
+  let hits = 0;
+  notes.forEach((n) => {
+    const texts = [...n.querySelectorAll("[data-text]")];
+    texts.forEach((el) => paint(el, q));
+    const title = n.querySelector("h2").textContent;
+    const match = !q || [title, ...texts.map((el) => el.dataset.text)].some((t) => t.toLowerCase().includes(q.toLowerCase()));
+    n.hidden = !match;
+    document.querySelector(`.rail li[data-for="${n.id}"]`).classList.toggle("dim", !match);
+    if (q && match) { hits++; const d = n.querySelector("details"); if (d.querySelector("mark")) d.open = true; }
+  });
+  $("find-count").textContent = q ? `${hits}장` : "";
+  const shown = notes.filter((n) => !n.hidden);           // 지금 선택된 슬라이드가 숨겨졌으면 첫 결과로 옮김
+  if (current.hidden && shown.length) setActive(shown[0]);
+  $("no-result").hidden = !q || hits > 0;
+});
+
+// 3) 스크롤하면 지금 보는 슬라이드를 목차와 노트에 표시 + 상단 진행선
+let current = notes[0];
+function setActive(note) {
+  current = note;
+  notes.forEach((n) => n.classList.toggle("active", n === note));
+  links.forEach((a) => a.setAttribute("aria-current", String(a.dataset.target === note.id)));
+  const link = links.find((a) => a.dataset.target === note.id);
+  if (link) link.scrollIntoView({ block: "nearest", inline: "nearest" });
+}
+const spy = new IntersectionObserver((entries) => {
+  entries.forEach((e) => { if (e.isIntersecting) setActive(e.target); });
+}, { rootMargin: "-35% 0px -60% 0px" });
+notes.forEach((n) => spy.observe(n));
+if (notes[0]) setActive(notes[0]);
+
+addEventListener("scroll", () => {
+  const max = document.documentElement.scrollHeight - innerHeight;
+  $("progress").style.width = (max > 0 ? (scrollY / max) * 100 : 0) + "%";
+  $("to-top").classList.toggle("show", scrollY > 500);
+}, { passive: true });
+$("to-top").addEventListener("click", () => scrollTo({ top: 0 }));
+
+// 4) 키보드 ← → 로 슬라이드 이동 (글자 입력 중일 때는 무시)
+function visibleNotes() { return notes.filter((n) => !n.hidden); }
+addEventListener("keydown", (e) => {
+  if (["INPUT", "TEXTAREA"].includes(document.activeElement.tagName) || e.altKey || e.ctrlKey || e.metaKey) return;
+  if ($("zoom").open) { if (e.key === "ArrowRight") zoomMove(1); if (e.key === "ArrowLeft") zoomMove(-1); return; }
+  const list = visibleNotes(), i = list.indexOf(current);
+  if (e.key === "ArrowRight" && i < list.length - 1) { e.preventDefault(); list[i + 1].scrollIntoView(); setActive(list[i + 1]); }
+  if (e.key === "ArrowLeft" && i > 0) { e.preventDefault(); list[i - 1].scrollIntoView(); setActive(list[i - 1]); }
+});
+
+// 5) 요약 복사
+document.querySelectorAll(".copy").forEach((b) => b.addEventListener("click", async () => {
+  try { await navigator.clipboard.writeText(b.dataset.copy); toast("요약을 복사했어요"); }
+  catch { toast("복사하지 못했어요. 글자를 직접 선택해 복사해 주세요."); }
+}));
+
+// 6) 슬라이드 크게 보기 (이전/다음, ← → 키, 바깥 누르면 닫기)
+const shots = [...document.querySelectorAll(".shot")];
+let zi = 0;
+function zoomShow(i) { zi = i; $("zoom-img").src = shots[i].dataset.src; $("zoom-img").alt = shots[i].dataset.title; $("zoom-title").textContent = shots[i].dataset.title; }
+function zoomMove(d) { zoomShow((zi + d + shots.length) % shots.length); }
+shots.forEach((s, i) => s.addEventListener("click", () => { zoomShow(i); $("zoom").showModal(); }));
+$("zoom-prev").addEventListener("click", () => zoomMove(-1));
+$("zoom-next").addEventListener("click", () => zoomMove(1));
+$("zoom-close").addEventListener("click", () => $("zoom").close());
+$("zoom").addEventListener("click", (e) => { if (e.target === $("zoom")) $("zoom").close(); });
+</script>
 {% endblock %}

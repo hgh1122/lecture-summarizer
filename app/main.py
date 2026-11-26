@@ -28,7 +28,6 @@ from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 
-from common import fmt_time
 from common.schema import LectureResult, load_result as load_result_json
 
 ROOT = Path(__file__).resolve().parent.parent          # 프로젝트 맨 위 폴더
@@ -37,7 +36,23 @@ ALLOWED_DIRS = [ROOT / "data", ROOT / "docs/samples"]   # 이미지로 내보내
 
 app = FastAPI(title="강의 영상 요약기")
 templates = Jinja2Templates(directory=str(Path(__file__).parent / "templates"))
-templates.env.filters["fmt_time"] = fmt_time           # 템플릿에서 {{ 95.3 | fmt_time }} -> 00:01:35
+
+
+def clock(sec: float) -> str:
+    """화면용 시간: 95.3 -> '1:35', 3725 -> '1:02:05' (1시간 넘을 때만 시 표시)"""
+    sec = int(sec)
+    h, m, s = sec // 3600, sec % 3600 // 60, sec % 60
+    return f"{h}:{m:02d}:{s:02d}" if h else f"{m}:{s:02d}"
+
+
+def minutes(sec: float) -> str:
+    """강의 길이: 300 -> '5분', 30 -> '1분 미만'"""
+    m = round(sec / 60)
+    return f"{m}분" if m >= 1 else "1분 미만"
+
+
+templates.env.filters["clock"] = clock                 # 템플릿에서 {{ 95.3 | clock }} -> 1:35
+templates.env.filters["minutes"] = minutes
 
 # ------------------------------------------------------------ 백그라운드 작업
 executor = ThreadPoolExecutor(max_workers=1)           # 동시에 1개만 처리
