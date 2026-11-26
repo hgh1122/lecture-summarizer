@@ -1,61 +1,42 @@
-# 모듈 사이 데이터 형식
+# 모듈 인터페이스
 
-- **시간은 모두 초 단위 숫자(float)** 로 주고받습니다. `00:01:35` 같은 표시는 화면(C)에서만 바꿉니다.
-- 경로는 프로젝트 루트 기준 상대 경로입니다.
-- 형식을 바꾸고 싶으면 이 문서를 고치는 PR을 먼저 올리고 팀원 확인을 받습니다.
+모듈 간 데이터 형식의 기준은 **`common/schema.py`** 입니다. 이 문서는 요약본입니다.
 
-## A → B : `data/<영상id>/slides.json`
+## 규칙
+- 모든 모듈은 `common/schema.py`의 데이터 클래스로만 입력/출력을 주고받습니다.
+- 시간 값은 모두 **초(float)** 단위입니다.
+- `schema.py` 변경은 별도 PR로 올리고, 팀원 전원 리뷰 후 머지합니다.
 
-```json
-{
-  "video_id": "abc123",
-  "title": "강의 제목",
-  "video_path": "data/abc123/video.mp4",
-  "audio_path": "data/abc123/audio.wav",
-  "duration": 1234.5,
-  "slides": [
-    {"no": 1, "start": 0.0, "end": 95.3, "image": "data/abc123/slides/001.png", "ocr_text": "CNN 개요"}
-  ]
-}
+## 함수 시그니처
+
+| 모듈 | 담당 | 함수 | 입력 → 출력 | 이슈 |
+|---|---|---|---|---|
+| 다운로드 | A | `video.download.download(url)` | `str` → `VideoMeta` | #4 |
+| 슬라이드 | A | `video.slides.extract_slides(video_path)` | `str` → `list[Slide]` | #5 |
+| 음성 인식 | B | `speech.stt.transcribe(audio_path)` | `str` → `list[Segment]` | #6 |
+| 정렬 | B | `speech.align.align(slides, segments)` | `list[Slide], list[Segment]` → `list[Note]` | #7 |
+| 요약 | B | `speech.summarize.summarize(slides, notes)` | → `(list[Note], str)` | 2단계 |
+| 저장 | C | `app.storage.save_result / load_result` | `LectureResult` ↔ 저장소 | #8 |
+| 웹 UI | C | `app/` | `LectureResult` → 화면 | #9 |
+| 통합 | 공통 | `pipeline.process_lecture(url)` | `str` → `LectureResult` | #10 |
+
+## 샘플 데이터 (`docs/samples/contract/`)
+
+| 파일 | 형식 | 용도 |
+|---|---|---|
+| `video_meta.json` | `VideoMeta` | download 출력 예시 |
+| `slides.json` | `list[Slide]` | extract_slides 출력 / align 입력 |
+| `segments.json` | `list[Segment]` | transcribe 출력 / align 입력 |
+| `notes.json` | `list[Note]` | align 출력 (정답 예시) |
+| `result.json` | `LectureResult` | 저장·웹 UI 입력 |
+
+앞 단계가 완성되지 않았어도 샘플을 불러와 개발할 수 있습니다.
+
+```python
+from common.schema import load_slides, load_segments, load_result
+slides = load_slides("docs/samples/contract/slides.json")
+segments = load_segments("docs/samples/contract/segments.json")
+result = load_result("docs/samples/contract/result.json")
 ```
 
-| 키 | 설명 |
-|---|---|
-| `slides[].no` | 1부터 시작하는 슬라이드 번호 |
-| `slides[].start`, `end` | 그 슬라이드가 화면에 떠 있던 구간(초) |
-| `slides[].image` | 캡처한 슬라이드 이미지 경로 |
-| `slides[].ocr_text` | 슬라이드에서 읽은 글자 (줄바꿈은 `\n`) |
-
-## B → C : `data/<영상id>/notes.json`
-
-```json
-{
-  "video_id": "abc123",
-  "title": "강의 제목",
-  "duration": 1234.5,
-  "segments": [
-    {"start": 0.0, "end": 4.2, "text": "오늘은 CNN을 배웁니다"}
-  ],
-  "notes": [
-    {
-      "no": 1, "start": 0.0, "end": 95.3,
-      "image": "data/abc123/slides/001.png",
-      "ocr_text": "CNN 개요",
-      "title": "CNN 개요",
-      "transcript": "오늘은 CNN을 배웁니다. ...",
-      "summary": "합성곱 신경망의 기본 개념을 소개함",
-      "keywords": []
-    }
-  ]
-}
-```
-
-| 키 | 설명 |
-|---|---|
-| `segments` | 음성 인식 원본 결과 (자막 .srt 만들 때 사용) |
-| `notes[].title` | 슬라이드 제목 (OCR 첫 줄, 없으면 "슬라이드 N") |
-| `notes[].transcript` | 그 슬라이드 구간에 한 말 전체 |
-| `notes[].summary` | 요약 (2단계 전까지는 빈 문자열 `""`) |
-| `notes[].keywords` | 3단계 기능, 없으면 빈 리스트 |
-
-샘플: [`samples/slides.json`](samples/slides.json), [`samples/notes.json`](samples/notes.json)
+샘플 검증: `python -m common.schema`
