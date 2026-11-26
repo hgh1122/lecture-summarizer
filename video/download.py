@@ -1,30 +1,14 @@
-"""[A] 1단계: 영상·오디오 다운로드 (yt-dlp, FFmpeg)"""
-import os
-import subprocess
-
-import yt_dlp
+"""[A] 영상 다운로드 모듈 (#4)"""
+from common.schema import VideoMeta
 
 
-def download_video(url, base_dir="data"):
-    """유튜브 링크 -> mp4 저장. (video_id, title, video_path, duration) 반환."""
-    opts = {
-        # 슬라이드 글자를 읽어야 하니 720p 정도로 받음 (너무 크면 처리 느림)
-        "format": "bv*[height<=720]+ba/b[height<=720]/b",
-        "outtmpl": os.path.join(base_dir, "%(id)s", "video.%(ext)s"),
-        "merge_output_format": "mp4",
-        "quiet": True,
-    }
-    with yt_dlp.YoutubeDL(opts) as ydl:
-        info = ydl.extract_info(url, download=True)
-    vid = info["id"]
-    video_path = os.path.join(base_dir, vid, "video.mp4")
-    return vid, info.get("title", ""), video_path, float(info.get("duration") or 0)
+def download(url: str, base_dir: str = "data") -> VideoMeta:
+    """YouTube URL -> 영상(mp4) + 오디오(16kHz mono wav) 저장 후 VideoMeta 반환
 
-
-def extract_audio(video_path, audio_path):
-    """mp4 -> 16kHz 모노 wav (Whisper 입력 형식)."""
-    subprocess.run(
-        ["ffmpeg", "-y", "-i", video_path, "-vn", "-ac", "1", "-ar", "16000", audio_path],
-        check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-    )
-    return audio_path
+    입력:  url       예) "https://www.youtube.com/watch?v=..."
+    출력:  VideoMeta  video_path = f"{base_dir}/{video_id}/video.mp4"
+                      audio_path = f"{base_dir}/{video_id}/audio.wav"
+    샘플:  docs/samples/contract/video_meta.json
+    힌트:  yt-dlp (다운로드), FFmpeg (-ac 1 -ar 16000)
+    """
+    raise NotImplementedError("#4")

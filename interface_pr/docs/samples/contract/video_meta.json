@@ -1,0 +1,7 @@
+{
+  "video_id": "sample",
+  "title": "샘플 강의 - CNN 기초",
+  "video_path": "data/sample/video.mp4",
+  "audio_path": "data/sample/audio.wav",
+  "duration": 300.0
+}
