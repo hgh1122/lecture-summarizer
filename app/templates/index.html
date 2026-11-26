@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="box">
+  <form id="form">
+    <input type="url" id="url" placeholder="https://www.youtube.com/watch?v=..." required>
+    <button id="btn" type="submit">노트 만들기</button>
+  </form>
+  <p class="muted">강의 한 편을 처리하는 데 몇 분 걸립니다. 이 페이지를 열어 두면 끝났을 때 노트 화면으로 넘어갑니다.</p>
+</div>
+<div id="status" class="status" hidden></div>
+
+<script>
+// 1) 버튼을 누르면 서버에 처리 요청 -> job_id 를 받음
+// 2) 3초마다 진행 상태를 물어봄 (폴링)
+// 3) 끝나면 노트 화면(/lectures/{video_id})으로 이동
+const form = document.getElementById("form");
+const btn = document.getElementById("btn");
+const box = document.getElementById("status");
+
+function show(text, cls) {
+  box.hidden = false;
+  box.className = "status " + (cls || "");
+  box.textContent = text;
+}
+
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  btn.disabled = true;
+  const res = await fetch("/api/jobs", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({url: document.getElementById("url").value}),
+  });
+  const data = await res.json();
+  if (!res.ok) { show(data.detail, "failed"); btn.disabled = false; return; }
+  poll(data.job_id);
+});
+
+async function poll(jobId) {
+  const res = await fetch("/api/jobs/" + jobId);
+  const job = await res.json();
+  if (job.status === "done") {
+    show("완료! 노트 화면으로 이동합니다.", "done");
+    location.href = "/lectures/" + encodeURIComponent(job.video_id);
+  } else if (job.status === "failed") {
+    show("처리 실패: " + job.message, "failed");
+    btn.disabled = false;
+  } else {
+    show("⏳ " + job.message);
+    setTimeout(() => poll(jobId), 3000);
+  }
+}
+</script>
+{% endblock %}

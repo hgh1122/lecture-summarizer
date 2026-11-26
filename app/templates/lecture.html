@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}{{ result.meta.title }} - 강의 영상 요약기{% endblock %}
+{% block content %}
+{% if is_sample %}<p class="muted">※ 샘플 데이터 (docs/samples/contract/result.json)</p>{% endif %}
+
+<h2>{{ result.meta.title }}</h2>
+<p class="muted">길이 {{ result.meta.duration | fmt_time }} · 슬라이드 {{ rows | length }}장</p>
+{% if result.overview %}
+<div class="box"><b>전체 요약</b><br>{{ result.overview }}</div>
+{% endif %}
+
+{% for r in rows %}
+<div class="box slide">
+  <img src="/files/{{ r.slide.image_path }}" alt="슬라이드 {{ r.slide.no }}">
+  <div>
+    <h3 style="margin-top:0">{{ r.slide.no }}. {{ r.title }}
+      <span class="time">{{ r.slide.start | fmt_time }} ~ {{ r.slide.end | fmt_time }}</span></h3>
+    {% if r.summary %}<p><b>요약</b> {{ r.summary }}</p>{% endif %}
+    <blockquote>{{ r.transcript or "(설명 없음)" }}</blockquote>
+  </div>
+</div>
+{% endfor %}
+{% endblock %}
