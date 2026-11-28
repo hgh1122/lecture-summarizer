@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}강의노트{% endblock %}</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+  <style>
+    /* ---------- 색·글자 기준값 (초록 포인트 + 흰 바탕 + 연회색) ---------- */
+    :root {
+      --green: #03C75A;       /* 포인트 초록: 버튼, 선택 표시 */
+      --green-dark: #02A64B;  /* 버튼 누를 때 */
+      --green-soft: #E6F9EE;  /* 연한 초록 바탕 */
+      --marker: #C5F2D7;      /* 요약 형광펜 (연두) */
+      --bg: #F5F6F8;          /* 페이지 바탕 */
+      --card: #FFFFFF;
+      --line: #E4E8EB;        /* 테두리 */
+      --text: #222222;
+      --text-2: #6E7378;      /* 보조 글자 */
+      --link: #0068C3;        /* 파란 링크 */
+      --alert: #FFEEEE; --alert-text: #D13B3B;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0; background: var(--bg); color: var(--text);
+      font-family: "Pretendard Variable", Pretendard, system-ui, -apple-system, "Noto Sans KR", sans-serif;
+      font-size: 16px; line-height: 1.65; word-break: keep-all; font-variant-numeric: tabular-nums;
+    }
+    a { color: var(--link); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    :focus-visible { outline: 3px solid var(--green); outline-offset: 2px; border-radius: 6px; }
+    .wrap { max-width: 1120px; margin: 0 auto; padding: 0 20px; }
+
+    /* ---------- 상단 바 (흰 바탕 + 아래 초록 진행선) ---------- */
+    .topbar { position: sticky; top: 0; z-index: 30; background: var(--card); border-bottom: 1px solid var(--line); }
+    .topbar .wrap { display: flex; align-items: center; justify-content: space-between; height: 58px; }
+    .brand { display: flex; align-items: center; gap: 8px; color: var(--text); font-weight: 800; font-size: 19px; letter-spacing: -0.03em; }
+    .brand:hover { text-decoration: none; }
+    .brand-mark { width: 26px; height: 26px; border-radius: 7px; background: var(--green); display: grid; place-items: center; }
+    .brand-mark::after { content: ""; width: 12px; height: 9px; border: 2px solid #fff; border-radius: 2px; }
+    .topbar nav a { color: var(--text-2); font-weight: 600; font-size: 14px; padding: 8px 12px; border-radius: 999px; }
+    .topbar nav a:hover { background: var(--bg); color: var(--text); text-decoration: none; }
+    .progress { position: absolute; left: 0; bottom: -1px; height: 3px; width: 0; background: var(--green); transition: width .1s linear; }
+
+    /* ---------- 버튼 ---------- */
+    .btn { appearance: none; border: 0; cursor: pointer; font: inherit; font-weight: 700; border-radius: 10px; padding: 13px 22px; background: var(--green); color: #fff; transition: background .15s, transform .1s; }
+    .btn:hover { background: var(--green-dark); }
+    .btn:active { transform: scale(.98); }
+    .btn:disabled { background: #A8DDBF; cursor: progress; }
+    .chip { appearance: none; border: 1px solid var(--line); background: var(--card); color: var(--text-2); font: inherit; font-size: 13px; font-weight: 600; padding: 6px 12px; border-radius: 999px; cursor: pointer; }
+    .chip:hover { border-color: var(--green); color: var(--green-dark); }
+
+    /* ---------- 아래에서 올라오는 알림 (복사 완료 등) ---------- */
+    .toast { position: fixed; left: 50%; bottom: 28px; transform: translate(-50%, 20px); opacity: 0; background: #222; color: #fff; font-size: 14px; padding: 11px 18px; border-radius: 999px; pointer-events: none; transition: opacity .2s, transform .2s; z-index: 50; }
+    .toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+    }
+  </style>
+  {% block head %}{% endblock %}
+</head>
+<body>
+  <header class="topbar">
+    <div class="wrap">
+      <a class="brand" href="/"><span class="brand-mark" aria-hidden="true"></span>강의노트</a>
+      <nav><a href="/">새 노트 만들기</a><a href="/sample">샘플 노트</a></nav>
+    </div>
+    <div class="progress" id="progress" aria-hidden="true"></div>
+  </header>
+  <main>{% block content %}{% endblock %}</main>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script>
+    // 공통: 아래 알림 띄우기
+    function toast(text) {
+      const t = document.getElementById("toast");
+      t.textContent = text; t.classList.add("show");
+      clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove("show"), 1800);
+    }
+  </script>
+</body>
+</html>
