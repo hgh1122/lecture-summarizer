@@ -178,40 +178,46 @@ lecture-summarizer/
 
 ## Contributing
 
-- Never push directly to `main`.
-- Work on `feature/<name>-<feature>` branches, e.g. `feature/ghhan-slide-detect`.
-- One feature per branch, one branch per pull request.
-- Pull requests are merged into `main` after the team lead's review.
+- `main` is protected by a branch ruleset: direct pushes, force pushes and branch deletion are blocked.
+- All changes go through a pull request from a `feature/<github-id>-<feature>` branch, e.g. `feature/hgh1122-slide-detect`.
+- Every pull request needs **at least one approval from a teammate other than the author** before it can be merged.
+- One feature per branch, one branch per pull request. Link the issue with `Closes #<number>`.
 - Prefix commit messages with the module tag, e.g. `[A] Add slide transition detection`.
+- Set your local git name and email to match your GitHub account (`git config --global user.name <github-id>`).
 - Keep `data/` (videos, audio, results) out of git.
-- Changing a type in `common/schema.py` changes everyone's contract. Open a separate PR for it and get the team's agreement first.
+- Changing a type in `common/schema.py` changes everyone's contract. Open a separate PR for it and get the whole team's review.
 
 ## Team
 
-1. **한건희** (A) — video & vision modules (download, slide detection, OCR), task queue, integration
-2. **최경호** (B) — speech modules (speech recognition, alignment, summarization)
-3. **김준범** (C) — service layer (API, database, web viewer, Word export)
+| Member | GitHub | Role | Modules |
+|---|---|---|---|
+| 한건희 (lead) | [@hgh1122](https://github.com/hgh1122) | A · Video & vision | download, slide detection, OCR, task queue, integration |
+| 최경호 | [@dnsjak2](https://github.com/dnsjak2) | B · Speech & text | speech recognition, alignment, summarization |
+| 김준범 | [@plumorange12](https://github.com/plumorange12) | C · Service | database, API, web viewer, Word export |
 
 ## Third-party open source
 
-This project is built on the following open-source software. Each is used under its own license.
+This project is built on the following open-source software. Each is used under its own license. *Planned* components are part of the target architecture and are added in stage 2.
 
-| Project | Used for | License |
-|---|---|---|
-| [yt-dlp](https://github.com/yt-dlp/yt-dlp) | Video download | Unlicense |
-| [FFmpeg](https://ffmpeg.org/) | Decoding, audio extraction | LGPL 2.1+ / GPL |
-| [OpenCV](https://github.com/opencv/opencv) | Frame processing | Apache 2.0 |
-| [PySceneDetect](https://github.com/Breakthrough/PySceneDetect) | Slide transition detection | BSD 3-Clause |
-| [EasyOCR](https://github.com/JaidedAI/EasyOCR) | Slide text recognition | Apache 2.0 |
-| [faster-whisper](https://github.com/SYSTRAN/faster-whisper) | Speech recognition | MIT |
-| [Ollama](https://github.com/ollama/ollama) | Local LLM server | MIT |
-| [PyTorch](https://github.com/pytorch/pytorch) | Deep learning runtime | BSD 3-Clause |
-| [PostgreSQL](https://www.postgresql.org/) | Database | PostgreSQL License |
-| [Redis](https://github.com/redis/redis) | Queue broker, progress store | RSALv2 / SSPLv1 / AGPLv3 |
-| [Celery](https://github.com/celery/celery) | Background task queue | BSD 3-Clause |
-| [FastAPI](https://github.com/fastapi/fastapi) | API server | MIT |
-| [Nginx](https://nginx.org/) | Web server, reverse proxy | BSD 2-Clause |
-| [python-docx](https://github.com/python-openxml/python-docx) | Word export | MIT |
+| Project | What it does | Why we need it | License | Status |
+|---|---|---|---|---|
+| [yt-dlp](https://github.com/yt-dlp/yt-dlp) | Downloads videos from YouTube | Gets the lecture video and its metadata from a single URL | Unlicense | in use |
+| [FFmpeg](https://ffmpeg.org/) | Decodes and converts audio/video | Merges downloaded streams and extracts 16 kHz mono audio for speech recognition | LGPL 2.1+ / GPL | in use |
+| [OpenCV](https://github.com/opencv/opencv) | Image and video processing | Reads frames and captures one keyframe per slide | Apache 2.0 | in use |
+| [PySceneDetect](https://github.com/Breakthrough/PySceneDetect) | Detects scene changes in video | Finds the moments slides change, which define the structure of the notes | BSD 3-Clause | in use |
+| [EasyOCR](https://github.com/JaidedAI/EasyOCR) | Text recognition (Korean + English) | Reads titles and keywords on slides that are never spoken aloud | Apache 2.0 | in use |
+| [faster-whisper](https://github.com/SYSTRAN/faster-whisper) | Speech-to-text with timestamps | Transcribes the lecture locally, even for videos without captions | MIT | in use |
+| [PyTorch](https://github.com/pytorch/pytorch) | Deep learning runtime | Runs the OCR model | BSD 3-Clause | in use |
+| [PostgreSQL](https://www.postgresql.org/) | Relational database | Stores lectures, slides and notes so results can be reopened | PostgreSQL License | in use |
+| [psycopg](https://github.com/psycopg/psycopg) | PostgreSQL driver for Python | Connects the storage module to PostgreSQL | LGPL 3.0 | in use |
+| [FastAPI](https://github.com/fastapi/fastapi) | Web/API framework | Serves the API (register a lecture, poll progress) and the web viewer | MIT | in use |
+| [Uvicorn](https://github.com/encode/uvicorn) | ASGI web server | Runs the FastAPI application | BSD 3-Clause | in use |
+| [Jinja2](https://github.com/pallets/jinja) | HTML template engine | Renders the per-slide note pages | BSD 3-Clause | in use |
+| [python-docx](https://github.com/python-openxml/python-docx) | Creates Word documents | Exports lecture notes as `.docx` | MIT | in use |
+| [Ollama](https://github.com/ollama/ollama) | Local LLM server | Summarizes each slide and the whole lecture without sending data outside | MIT | planned |
+| [Redis](https://github.com/redis/redis) | In-memory data store | Message broker and progress store for background jobs | RSALv2 / SSPLv1 / AGPLv3 | planned |
+| [Celery](https://github.com/celery/celery) | Distributed task queue | Runs the minutes-long pipeline in the background, one job at a time | BSD 3-Clause | planned |
+| [Nginx](https://nginx.org/) | Web server, reverse proxy | Serves static files and forwards requests to the API | BSD 2-Clause | planned |
 
 ## License
 
@@ -394,40 +400,46 @@ lecture-summarizer/
 
 ## 협업 규칙
 
-- `main` 브랜치에 직접 push하지 않습니다.
-- 작업은 `feature/<이름>-<기능>` 브랜치에서 합니다. (예: `feature/ghhan-slide-detect`)
-- 기능 하나당 브랜치 하나, 브랜치 하나당 Pull Request 하나를 원칙으로 합니다.
-- Pull Request는 팀장 확인 후 `main`에 병합합니다.
+- `main` 브랜치는 Ruleset으로 보호합니다. 직접 push, 강제 push(force push), 브랜치 삭제가 막혀 있습니다.
+- 모든 변경은 `feature/<GitHub아이디>-<기능>` 브랜치에서 작업하고 Pull Request로 병합합니다. (예: `feature/hgh1122-slide-detect`)
+- 모든 Pull Request는 **작성자가 아닌 팀원 1명 이상의 승인**을 받아야 병합할 수 있습니다.
+- 기능 하나당 브랜치 하나, 브랜치 하나당 Pull Request 하나를 원칙으로 하고, `Closes #번호`로 이슈를 연결합니다.
 - 커밋 메시지 앞에는 모듈 태그를 붙입니다. (예: `[A] 슬라이드 전환 감지 추가`)
+- 각자 PC의 git 이름과 이메일은 GitHub 계정과 같게 설정합니다. (`git config --global user.name <GitHub아이디>`)
 - `data/` 폴더(영상, 음성, 결과물)는 git에 올리지 않습니다.
-- `common/schema.py`의 형식을 바꾸면 모든 모듈의 약속이 바뀝니다. 반드시 별도 PR로 올리고 팀원 동의를 먼저 받습니다.
+- `common/schema.py`의 형식을 바꾸면 모든 모듈의 약속이 바뀝니다. 반드시 별도 PR로 올리고 팀원 전원의 리뷰를 받습니다.
 
 ## 팀
 
-1. **한건희** (A) — 영상·비전 모듈 (다운로드, 슬라이드 감지, 글자 인식), 작업 큐, 통합
-2. **최경호** (B) — 음성 모듈 (음성 인식, 정렬, 요약)
-3. **김준범** (C) — 서비스 계층 (API, 데이터베이스, 웹 화면, Word 내보내기)
+| 이름 | GitHub | 역할 | 담당 모듈 |
+|---|---|---|---|
+| 한건희 (팀장) | [@hgh1122](https://github.com/hgh1122) | A · 영상·비전 | 다운로드, 슬라이드 감지, 글자 인식, 작업 큐, 통합 |
+| 최경호 | [@dnsjak2](https://github.com/dnsjak2) | B · 음성·텍스트 | 음성 인식, 정렬, 요약 |
+| 김준범 | [@plumorange12](https://github.com/plumorange12) | C · 서비스 | 데이터베이스, API, 웹 화면, Word 내보내기 |
 
 ## 사용한 오픈소스
 
-이 프로젝트는 아래 오픈소스 소프트웨어를 기반으로 만들어졌으며, 각 구성 요소는 고유의 라이선스를 따릅니다.
+이 프로젝트는 아래 오픈소스 소프트웨어를 기반으로 만들어졌으며, 각 구성 요소는 고유의 라이선스를 따릅니다. *예정* 표시는 목표 구조에 포함되어 2단계에서 추가하는 구성 요소입니다.
 
-| 프로젝트 | 용도 | 라이선스 |
-|---|---|---|
-| [yt-dlp](https://github.com/yt-dlp/yt-dlp) | 영상 다운로드 | Unlicense |
-| [FFmpeg](https://ffmpeg.org/) | 디코딩, 오디오 추출 | LGPL 2.1+ / GPL |
-| [OpenCV](https://github.com/opencv/opencv) | 프레임 처리 | Apache 2.0 |
-| [PySceneDetect](https://github.com/Breakthrough/PySceneDetect) | 슬라이드 전환 감지 | BSD 3-Clause |
-| [EasyOCR](https://github.com/JaidedAI/EasyOCR) | 슬라이드 글자 인식 | Apache 2.0 |
-| [faster-whisper](https://github.com/SYSTRAN/faster-whisper) | 음성 인식 | MIT |
-| [Ollama](https://github.com/ollama/ollama) | 로컬 LLM 서버 | MIT |
-| [PyTorch](https://github.com/pytorch/pytorch) | 딥러닝 실행 환경 | BSD 3-Clause |
-| [PostgreSQL](https://www.postgresql.org/) | 데이터베이스 | PostgreSQL License |
-| [Redis](https://github.com/redis/redis) | 큐 브로커, 진행 상황 저장 | RSALv2 / SSPLv1 / AGPLv3 |
-| [Celery](https://github.com/celery/celery) | 백그라운드 작업 큐 | BSD 3-Clause |
-| [FastAPI](https://github.com/fastapi/fastapi) | API 서버 | MIT |
-| [Nginx](https://nginx.org/) | 웹 서버, 리버스 프록시 | BSD 2-Clause |
-| [python-docx](https://github.com/python-openxml/python-docx) | Word 내보내기 | MIT |
+| 프로젝트 | 기능 | 필요성 | 라이선스 | 상태 |
+|---|---|---|---|---|
+| [yt-dlp](https://github.com/yt-dlp/yt-dlp) | YouTube 영상 다운로드 | 링크 하나로 강의 영상과 정보(제목, 길이)를 가져옴 | Unlicense | 사용 중 |
+| [FFmpeg](https://ffmpeg.org/) | 영상·음성 디코딩 및 변환 | 내려받은 영상·음성을 합치고, 음성 인식용 16 kHz 모노 오디오를 추출 | LGPL 2.1+ / GPL | 사용 중 |
+| [OpenCV](https://github.com/opencv/opencv) | 이미지·영상 처리 | 영상 프레임을 읽고 슬라이드마다 대표 화면을 캡처 | Apache 2.0 | 사용 중 |
+| [PySceneDetect](https://github.com/Breakthrough/PySceneDetect) | 영상 장면 전환 감지 | 슬라이드가 바뀌는 시점을 찾아 노트의 뼈대를 만듦 | BSD 3-Clause | 사용 중 |
+| [EasyOCR](https://github.com/JaidedAI/EasyOCR) | 글자 인식 (한글·영어) | 강의자가 말로 하지 않는 슬라이드 제목과 핵심어를 읽어 냄 | Apache 2.0 | 사용 중 |
+| [faster-whisper](https://github.com/SYSTRAN/faster-whisper) | 시간 정보가 포함된 음성 인식 | 자막이 없는 영상도 로컬에서 받아 적음 | MIT | 사용 중 |
+| [PyTorch](https://github.com/pytorch/pytorch) | 딥러닝 실행 환경 | 글자 인식 모델 실행 | BSD 3-Clause | 사용 중 |
+| [PostgreSQL](https://www.postgresql.org/) | 관계형 데이터베이스 | 강의·슬라이드·노트를 저장해 결과를 다시 열어 볼 수 있게 함 | PostgreSQL License | 사용 중 |
+| [psycopg](https://github.com/psycopg/psycopg) | Python용 PostgreSQL 드라이버 | 저장 모듈과 PostgreSQL을 연결 | LGPL 3.0 | 사용 중 |
+| [FastAPI](https://github.com/fastapi/fastapi) | 웹·API 프레임워크 | 강의 등록, 진행 상황 조회 API와 웹 화면 제공 | MIT | 사용 중 |
+| [Uvicorn](https://github.com/encode/uvicorn) | ASGI 웹 서버 | FastAPI 애플리케이션 실행 | BSD 3-Clause | 사용 중 |
+| [Jinja2](https://github.com/pallets/jinja) | HTML 템플릿 엔진 | 슬라이드별 노트 화면 생성 | BSD 3-Clause | 사용 중 |
+| [python-docx](https://github.com/python-openxml/python-docx) | Word 문서 생성 | 강의 노트를 `.docx`로 내보냄 | MIT | 사용 중 |
+| [Ollama](https://github.com/ollama/ollama) | 로컬 LLM 서버 | 데이터를 외부로 보내지 않고 슬라이드별·강의 전체 요약 | MIT | 예정 |
+| [Redis](https://github.com/redis/redis) | 인메모리 데이터 저장소 | 백그라운드 작업의 메시지 브로커와 진행 상황 저장 | RSALv2 / SSPLv1 / AGPLv3 | 예정 |
+| [Celery](https://github.com/celery/celery) | 분산 작업 큐 | 몇 분씩 걸리는 처리를 백그라운드에서 하나씩 순서대로 실행 | BSD 3-Clause | 예정 |
+| [Nginx](https://nginx.org/) | 웹 서버, 리버스 프록시 | 정적 파일 제공과 API 요청 전달 | BSD 2-Clause | 예정 |
 
 ## 라이선스
 
